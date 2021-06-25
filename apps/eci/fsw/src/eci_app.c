@@ -129,8 +129,8 @@ typedef struct {
    App_FaultRep_Class  FaultRep;  /*  Fault Reporter Object */
 #endif
 
-   CFE_SB_MsgPtr_t MsgPtr;        /*  Operational data (not reported in housekeeping). */  
-   CFE_SB_MsgPtr_t DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */
+   CFE_MSG_Message_t MsgPtr;        /*  Operational data (not reported in housekeeping). */  
+   CFE_MSG_Message_t DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */
    CFE_SB_PipeId_t CmdPipe;       /*  Software Command Pipe Id */  
    CFE_SB_PipeId_t DataPipe;      /*  Software Data Pipe Id */
    uint32 RunStatus;              /*  RunStatus variable used in the main processing loop */
@@ -918,7 +918,7 @@ static void add_to_ring_buffer(int* qtl, int* qcnt, void* data, size_t data_size
  *
  * \return #ECI_MsgControl_t
  *********************************************************************/
-static ECI_MsgControl_t enqueue_cmd_msg(const CFE_SB_MsgPtr_t msg, const unsigned int idx) {
+static ECI_MsgControl_t enqueue_cmd_msg(const CFE_MSG_Message_t msg, const unsigned int idx) {
 
    /* Command Queue cannot hold any more messages */
    if (MsgRcv[idx].qcnt >= ECI_CMD_MSG_QUEUE_SIZE){
@@ -927,7 +927,7 @@ static ECI_MsgControl_t enqueue_cmd_msg(const CFE_SB_MsgPtr_t msg, const unsigne
 
    } else { /* Command message added to Queue */
 
-      add_to_ring_buffer(&(MsgRcv[idx].qtl), &(MsgRcv[idx].qcnt), msg, MsgRcv[idx].MsgStruct->siz, MsgRcv[idx].MsgStruct->qptr, ECI_CMD_MSG_QUEUE_SIZE);
+      add_to_ring_buffer(&(MsgRcv[idx].qtl), &(MsgRcv[idx].qcnt), &msg, MsgRcv[idx].MsgStruct->siz, MsgRcv[idx].MsgStruct->qptr, ECI_CMD_MSG_QUEUE_SIZE);
 
       return QUEUED;
 
@@ -943,12 +943,12 @@ static ECI_MsgControl_t enqueue_cmd_msg(const CFE_SB_MsgPtr_t msg, const unsigne
  *
  * \return #ECI_MsgControl_t
  *********************************************************************/
-static ECI_MsgControl_t msg_manage(const CFE_SB_MsgPtr_t msg, const unsigned int idx) {
+static ECI_MsgControl_t msg_manage(const CFE_MSG_Message_t  msg, const unsigned int idx) {
 
    /* Buffers Telemetry Message Data */
    if (MsgRcv[idx].qexists == false) {
 
-      CFE_PSP_MemCpy(MsgRcv[idx].MsgStruct->mptr, msg, MsgRcv[idx].MsgStruct->siz);
+      CFE_PSP_MemCpy(MsgRcv[idx].MsgStruct->mptr, &msg, MsgRcv[idx].MsgStruct->siz);
 
       return BUFFERED;
 
@@ -969,7 +969,7 @@ static ECI_MsgControl_t msg_manage(const CFE_SB_MsgPtr_t msg, const unsigned int
  * \param[in] PipeType = Indicates whether software bus message is command or data pipe
  *
  ********************************************************************/
-static void rcv_msg(const CFE_SB_MsgPtr_t msg, CFE_SB_MsgId_t mid, uint16 ActualLength, SB_PipeType_t PipeType) {
+static void rcv_msg(const CFE_MSG_Message_t msg, CFE_SB_MsgId_t mid, uint16 ActualLength, SB_PipeType_t PipeType) {
 
    int idx;
 
@@ -1052,8 +1052,9 @@ static void housekeeping_cmd(void) {
 #endif
 
    /* Send housekeeping telemetry packet */
-   CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) & ECI_AppData.HkPacket);
-   CFE_SB_SendMsg((CFE_SB_Msg_t *) & ECI_AppData.HkPacket);
+   bool IncrementSequenceCount;
+   CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) & ECI_AppData.HkPacket);
+   CFE_SB_TransmitMsg((CFE_MSG_Message_t *) & ECI_AppData.HkPacket, IncrementSequenceCount);
 
 } /* End of housekeeping_cmd() */
 
@@ -1063,7 +1064,7 @@ static void housekeeping_cmd(void) {
  * \param[in] MessagePtr = Pointer to command message from cFE table services
  *                         Has parameter with index to table in ECI_ParamTable[]
  *********************************************************************/
-static void table_manage_cmd(CFE_SB_MsgPtr_t MessagePtr)
+static void table_manage_cmd(CFE_MSG_Message_t MessagePtr)
 {
 
 #ifdef ECI_PARAM_TBL_DEFINED
@@ -1328,18 +1329,18 @@ static void send_msg(void) {
 
       /* Applies time stamp if telemetry message */
       if (CCSDS_SID_TYPE(ECI_MsgSnd[idx].mid) == CCSDS_TLM) {
-         CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) ECI_MsgSnd[idx].mptr);
+         CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr);
       } /* End if statement */
 
-      CFE_SB_SetMsgId((CFE_SB_Msg_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid);
+      CFE_SB_SetMsgId((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid);
 
-      CFE_SB_SetTotalMsgLength((CFE_SB_Msg_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].siz);
+      CFE_SB_SetTotalMsgLength((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].siz);
 
       /* Will place message onto software bus if app-specified enables output or if
          set to always output*/
       if (ECI_MsgSnd[idx].sendMsg == NULL || *(ECI_MsgSnd[idx].sendMsg))
       {
-         CFE_SB_SendMsg((CFE_SB_Msg_t *) ECI_MsgSnd[idx].mptr);
+         CFE_SB_SendMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr);
       } /* End if statement */
 
    } /* End for-loop */
@@ -1353,11 +1354,11 @@ static void fdc_pkt_gen(void) {
 
 #ifdef ECI_FLAG_TABLE_DEFINED
 
-   App_FaultRep_GenTlmMsg((void*)&ECI_AppData.FaultRep, (CFE_SB_MsgPtr_t)&ECI_AppData.FDCPacket);
+   App_FaultRep_GenTlmMsg((void*)&ECI_AppData.FaultRep, (CFE_MSG_Message_t)&ECI_AppData.FDCPacket);
 
    /* Send FDC telemetry packet */
-   CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) &ECI_AppData.FDCPacket);
-   CFE_SB_SendMsg((CFE_SB_Msg_t *) &ECI_AppData.FDCPacket);
+   CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket);
+   CFE_SB_SendMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket);
 
 #endif /* ECI_FLAG_TABLE_DEFINED */
 
@@ -1451,15 +1452,15 @@ static void do_step(void) {
  *
  * \param[in] msg = Pointer to a software bus message.
  ********************************************************************/
-static void app_pipe(const CFE_SB_MsgPtr_t msg) {
+static void app_pipe(const CFE_MSG_Message_t msg) {
 
    CFE_SB_MsgId_t messageID;
-   uint16 commandCode;
-   uint16 ActualLength;
+   CFE_MSG_FcnCode_t commandCode;
+   CFE_MSG_Size_t ActualLength;
 
    /* Obtain the message ID */
-   messageID = CFE_SB_GetMsgId(msg);
-   ActualLength = CFE_SB_GetTotalMsgLength(msg);
+   CFE_MSG_GetMsgId(&msg, &messageID);
+   CFE_SB_GetTotalMsgLength(&msg, &ActualLength);
 
    /* Execute based on message Id */
    switch (messageID) {
@@ -1470,7 +1471,7 @@ static void app_pipe(const CFE_SB_MsgPtr_t msg) {
       case ECI_CMD_MID:
 
          /* Obtain command code */           
-         commandCode = CFE_SB_GetCmdCode(msg);
+         CFE_MSG_GetFcnCode(&msg, &commandCode);
 
          switch (commandCode) {
 
@@ -1497,7 +1498,7 @@ static void app_pipe(const CFE_SB_MsgPtr_t msg) {
             case ECI_FAULTREP_CONFIG_CC:
                if (!verify_msg_length(messageID, ActualLength, (CFE_SB_CMD_HDR_SIZE + sizeof(App_FaultRep_ConfigFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
-               else if (App_FaultRep_ConfigFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(msg)))
+               else if (App_FaultRep_ConfigFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++;
                else
                   ECI_AppData.HkPacket.CmdErrorCounter++;
@@ -1508,7 +1509,7 @@ static void app_pipe(const CFE_SB_MsgPtr_t msg) {
             case ECI_FAULTREP_CLEAR_CC:
                if (!verify_msg_length(messageID, ActualLength, (CFE_SB_CMD_HDR_SIZE + sizeof(App_FaultRep_ClearFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
-               else if (App_FaultRep_ClearFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(msg)))
+               else if (App_FaultRep_ClearFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++; 
                else
                   ECI_AppData.HkPacket.CmdErrorCounter++;
@@ -1556,7 +1557,9 @@ static void app_pipe(const CFE_SB_MsgPtr_t msg) {
          {
             while (CFE_SB_RcvMsg(&ECI_AppData.DataMsgPtr, ECI_AppData.DataPipe, CFE_SB_POLL) >= CFE_SUCCESS)
             {
-               rcv_msg(ECI_AppData.DataMsgPtr, CFE_SB_GetMsgId(ECI_AppData.DataMsgPtr), CFE_SB_GetTotalMsgLength(ECI_AppData.DataMsgPtr), DATAPIPE);
+               CFE_MSG_GetMsgId(&ECI_AppData.DataMsgPtr, messageID);
+               CFE_MSG_GetSize(&ECI_AppData.DataMsgPtr, ActualLength);
+               rcv_msg(ECI_AppData.DataMsgPtr, messageID, ActualLength, DATAPIPE);
             } /* End while-loop */
 
             do_step(); 
