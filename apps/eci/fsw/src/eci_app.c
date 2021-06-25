@@ -268,7 +268,7 @@ static int32 sb_init(void)
    /* Exits sb_init() for subscribe fails */
    if (status < CFE_SUCCESS)
    {
-      CFE_EVS_SendEvent(ECI_SUB_CMD_MID_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_SUB_CMD_MID_ERR_EID, CFE_EVS_EventType_ERROR,
                        "Error Subscribing to ECI_CMD_MID 0x%04X, Status = 0x%08X", 
                         ECI_CMD_MID, status);
       return status;
@@ -280,7 +280,7 @@ static int32 sb_init(void)
    /* Exits sb_init() for subscribe fails */
    if (status < CFE_SUCCESS)
    {
-      CFE_EVS_SendEvent(ECI_SUB_SEND_HK_MSG_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_SUB_SEND_HK_MSG_ERR_EID, CFE_EVS_EventType_ERROR,
                        "ERROR Subscribing to ECI_SEND_HK_MID 0x%04X, Status = 0x%08X", 
                         ECI_SEND_HK_MID, status);
       return status;
@@ -292,7 +292,7 @@ static int32 sb_init(void)
    /* Exits sb_init() for subscribe fails */
    if (status < CFE_SUCCESS)
    {
-      CFE_EVS_SendEvent(ECI_SUB_TBL_MANAGE_MSG_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_SUB_TBL_MANAGE_MSG_ERR_EID, CFE_EVS_EventType_ERROR,
                        "ERROR Subscribing to ECI_TBL_MANAGE_MID 0x%04X, Status = 0x%08X", 
                         ECI_TBL_MANAGE_MID, status);
       return status;
@@ -304,7 +304,7 @@ static int32 sb_init(void)
    /* Exits sb_init() for subscribe fails */
    if (status < CFE_SUCCESS)
    {
-      CFE_EVS_SendEvent(ECI_SUB_TICK_MSG_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_SUB_TICK_MSG_ERR_EID, CFE_EVS_EventType_ERROR,
                        "Error Subscribing to ECI_TICK_MID 0x%04X, Status = 0x%08X",
                         ECI_TICK_MID, status);
       return status;
@@ -335,7 +335,7 @@ static int32 sb_init(void)
              MsgRcv[idx].MsgStruct->mid == ECI_TBL_MANAGE_MID || 
              MsgRcv[idx].MsgStruct->mid == ECI_TICK_MID)
          {
-            CFE_EVS_SendEvent(ECI_CMD_MSGID_RESERVE_ERR_EID, CFE_EVS_ERROR,
+            CFE_EVS_SendEvent(ECI_CMD_MSGID_RESERVE_ERR_EID, CFE_EVS_EventType_ERROR,
                              "Msg ID for CMD MID 0x%04X in ECI_MsgRcv[%d] is reserved value", 
                               MsgRcv[idx].MsgStruct->mid, idx);
             return (CFE_SUCCESS - 1);
@@ -347,7 +347,7 @@ static int32 sb_init(void)
          /* Exits sb_init() for subscribe fails */
          if (status < CFE_SUCCESS)
          {
-            CFE_EVS_SendEvent(ECI_CMD_SUBSCRIBE_ERR_EID, CFE_EVS_ERROR,
+            CFE_EVS_SendEvent(ECI_CMD_SUBSCRIBE_ERR_EID, CFE_EVS_EventType_ERROR,
                              "Error Subscribing to CMD MID 0x%04X in ECI_MsgRcv[%d] on CMD Pipe, Status = 0x%08X", 
                               MsgRcv[idx].MsgStruct->mid, idx, status);
             return status;
@@ -368,7 +368,7 @@ static int32 sb_init(void)
          /* Exits sb_init() for subscribe fails */
          if (status < CFE_SUCCESS)
          {
-            CFE_EVS_SendEvent(ECI_TLM_SUBSCRIBE_ERR_EID, CFE_EVS_ERROR,
+            CFE_EVS_SendEvent(ECI_TLM_SUBSCRIBE_ERR_EID, CFE_EVS_EventType_ERROR,
                              "Error Subscribing to MsgID 0x%04X in ECI_MsgRcv[%d] on Data Pipe, Status = 0x%08X",
                               MsgRcv[idx].MsgStruct->mid, idx, status);
                                   
@@ -376,7 +376,7 @@ static int32 sb_init(void)
          } /* End if-statement */
       } /* End if-else statement */
    } /* End for-loop */
-   
+
    /* Init cFE Msg Outputted */
    for (idx = 0; idx < SIZEOF_ARRAY(ECI_MsgSnd) - 1; idx++)
    {
@@ -418,7 +418,7 @@ static int32 param_table_register(void) {
 
       /* Event message if table registration returns error */
       if (param_status != CFE_SUCCESS) {
-         CFE_EVS_SendEvent(ECI_PARAM_TBL_REG_ERR_EID, CFE_EVS_ERROR,
+         CFE_EVS_SendEvent(ECI_PARAM_TBL_REG_ERR_EID, CFE_EVS_EventType_ERROR,
          "ERROR Registering ECI_ParamTable[%d], Status = 0x%08X", idx, (int)param_status);
       } else {
          /* cFE table services will notify app if parameter table update */
@@ -464,7 +464,7 @@ static int32 load_param_table(void) {
 
       /* Table Load returns error */
       if (status != CFE_SUCCESS) {
-         CFE_EVS_SendEvent(ECI_PARAM_TBL_LOAD_ERR_EID, CFE_EVS_ERROR,
+         CFE_EVS_SendEvent(ECI_PARAM_TBL_LOAD_ERR_EID, CFE_EVS_EventType_ERROR,
                           "ERROR Loading ECI_ParamTable[%d] (%s), Status = 0x%08X",
                            idx, ECI_ParamTable[idx].tblname, (int)status);
                               
@@ -493,7 +493,7 @@ static int32 load_param_table(void) {
          if (status >= CFE_SUCCESS) {
             status = CFE_SUCCESS;
          } else {
-            CFE_EVS_SendEvent(ECI_PARAM_TBL_GETADDR_ERR_EID, CFE_EVS_ERROR,
+            CFE_EVS_SendEvent(ECI_PARAM_TBL_GETADDR_ERR_EID, CFE_EVS_EventType_ERROR,
                               "ERROR Getting Address from cFE Table Services from ECI_ParamTable[%d] (%s), Status = 0x%08X",
                               idx, ECI_ParamTable[idx].tblname, (int)status);
 
@@ -502,7 +502,7 @@ static int32 load_param_table(void) {
 
       } else {
 
-         CFE_EVS_SendEvent(ECI_PARAM_TBL_MANAGE_ERR_EID, CFE_EVS_ERROR, 
+         CFE_EVS_SendEvent(ECI_PARAM_TBL_MANAGE_ERR_EID, CFE_EVS_EventType_ERROR, 
                           "ERROR Managing ECI_ParamTable[%d] (%s), Status = 0x%08X", 
                            idx, ECI_ParamTable[idx].tblname, (int)status);
 
@@ -541,7 +541,7 @@ static int32 state_table_register(void) {
 
    /* State table registration returns error */
    if (state_status != CFE_SUCCESS) {
-      CFE_EVS_SendEvent(ECI_STATE_TBL_REG_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_STATE_TBL_REG_ERR_EID, CFE_EVS_EventType_ERROR,
                        "ERROR Registering ECI STATE Table, Status = 0x%08X",
                         state_status);
    } else {
@@ -552,7 +552,7 @@ static int32 state_table_register(void) {
       state_status = CFE_TBL_Load(TableHandle_State, CFE_TBL_SRC_ADDRESS, &ECI_STATE_TBL);
 
       if (state_status != CFE_SUCCESS) {
-         CFE_EVS_SendEvent(ECI_STATE_TBL_LOAD_ERR_EID, CFE_EVS_ERROR,
+         CFE_EVS_SendEvent(ECI_STATE_TBL_LOAD_ERR_EID, CFE_EVS_EventType_ERROR,
                           "ERROR LOADING ECI STATE Table, Status = 0x%08X",
                            state_status);
       } /* End if statement */
@@ -638,7 +638,7 @@ static int32 cds_init(void) {
          /* If there is an error restoring from CDS */
          if (status < CFE_SUCCESS)
          {
-            CFE_EVS_SendEvent(ECI_CDS_RESTORE_ERR_EID, CFE_EVS_ERROR, "ECI_CdsTable[%d] failed to restore from CDS, Status = 0x%08X", idx, (int)status);
+            CFE_EVS_SendEvent(ECI_CDS_RESTORE_ERR_EID, CFE_EVS_EventType_ERROR, "ECI_CdsTable[%d] failed to restore from CDS, Status = 0x%08X", idx, (int)status);
          } /* End if-statement */
 
       } else if (status == CFE_ES_NOT_IMPLEMENTED) {  /* If CDS is unavailable */
@@ -813,7 +813,7 @@ static bool verify_msg_length(CFE_SB_MsgId_t messageID, uint16 actualLength, uin
 
    /* Telemetry message length check failed */
    if (tlmFail) {
-      CFE_EVS_SendEvent(ECI_TLM_LEN_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_TLM_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
          "Invalid tlm pkt: ID = 0x%X, Len = %d (Expected = %d)",
          messageID, actualLength, expectedLength);
       result = false;
@@ -821,7 +821,7 @@ static bool verify_msg_length(CFE_SB_MsgId_t messageID, uint16 actualLength, uin
 
    /* Command message length check failed */
    if (cmdFail) {
-      CFE_EVS_SendEvent(ECI_CMD_LEN_ERR_EID, CFE_EVS_ERROR,
+      CFE_EVS_SendEvent(ECI_CMD_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
          "Invalid cmd pkt: ID = 0x%X, Len = %d (Expected = %d)",
          messageID, actualLength, expectedLength);
       result = false;
@@ -999,7 +999,7 @@ static void rcv_msg(const CFE_SB_MsgPtr_t msg, CFE_SB_MsgId_t mid, uint16 Actual
             {
                case QUEUEFULL:
 
-                  CFE_EVS_SendEvent(ECI_QFULL_ERR_EID, CFE_EVS_ERROR, "Cmd Queue for mid 0x%04X is full. Msg dropped", MsgRcv[idx].MsgStruct->mid);
+                  CFE_EVS_SendEvent(ECI_QFULL_ERR_EID, CFE_EVS_EventType_ERROR, "Cmd Queue for mid 0x%04X is full. Msg dropped", MsgRcv[idx].MsgStruct->mid);
                   MsgRcv[idx].ecnt++;
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                   break;
@@ -1036,7 +1036,7 @@ static void rcv_msg(const CFE_SB_MsgPtr_t msg, CFE_SB_MsgId_t mid, uint16 Actual
       } /* End if statement */
 
       /* Send Event */
-      CFE_EVS_SendEvent(ECI_UNK_MID_ERR_EID, CFE_EVS_ERROR, "Msg with Invalid MID Received on %s: ID = 0x%X", (PipeType ? "DATA PIPE":"CMD PIPE"), mid);
+      CFE_EVS_SendEvent(ECI_UNK_MID_ERR_EID, CFE_EVS_EventType_ERROR, "Msg with Invalid MID Received on %s: ID = 0x%X", (PipeType ? "DATA PIPE":"CMD PIPE"), mid);
    } /* End if statement */
 
 } /* End of rcv_msg() */
@@ -1087,14 +1087,14 @@ static void table_manage_cmd(CFE_SB_MsgPtr_t MessagePtr)
       /* Get address of tables active buffer and lock against updates */
       if (Result < CFE_SUCCESS)
       {
-         CFE_EVS_SendEvent(ECI_MANAGE_TBL_GETADDR_ERR_EID, CFE_EVS_ERROR, 
+         CFE_EVS_SendEvent(ECI_MANAGE_TBL_GETADDR_ERR_EID, CFE_EVS_EventType_ERROR, 
                            "Table Manage Cmd ERROR: Getting ECI Parameter Table Address(idx = %d) with %s, Status = 0x%08X", 
                           (int)CmdPtr->Payload.Parameter, ECI_ParamTable[CmdPtr->Payload.Parameter].tblname, (int)Result);
       } /* End if statement */
    }
    else
    {
-      CFE_EVS_SendEvent(ECI_MANAGE_TBL_PARAM_IDX_ERR_EID, CFE_EVS_ERROR, 
+      CFE_EVS_SendEvent(ECI_MANAGE_TBL_PARAM_IDX_ERR_EID, CFE_EVS_EventType_ERROR, 
                         "Table Manage Cmd ERROR: ECI Parameter Table idx (idx = %d) out of valid range (0 to %d)", 
                        (int)CmdPtr->Payload.Parameter, (int)(SIZEOF_ARRAY(ECI_ParamTable) - 1));
    } /* End if-else statement */
@@ -1384,7 +1384,7 @@ static void cds_update(void) {
 
       if (status < CFE_SUCCESS){
 
-         CFE_EVS_SendEvent(ECI_CDS_COPYTOCDS_ERR_EID, CFE_EVS_ERROR, "Error saving data in ECI_CdsTable[%d] to CDS", idx);
+         CFE_EVS_SendEvent(ECI_CDS_COPYTOCDS_ERR_EID, CFE_EVS_EventType_ERROR, "Error saving data in ECI_CdsTable[%d] to CDS", idx);
 
       } /* End if-statement */
    } /* End for-loop */
@@ -1520,7 +1520,7 @@ static void app_pipe(const CFE_SB_MsgPtr_t msg) {
                if (commandCode <= ECI_FUNC_CODE_END && commandCode >= ECI_FUNC_CODE_START)
                   rcv_msg(msg, ECI_CMD_MID, ActualLength, CMDPIPE); /* Receive message prior to execution */
                else {
-                  CFE_EVS_SendEvent(ECI_INV_CMD_CODE_ERR_EID, CFE_EVS_ERROR,
+                  CFE_EVS_SendEvent(ECI_INV_CMD_CODE_ERR_EID, CFE_EVS_EventType_ERROR,
                                    "Invalid Command Code: ID = 0x%X, CC = %d",
                                     messageID, commandCode);
                   ECI_AppData.HkPacket.CmdErrorCounter++;
@@ -1595,9 +1595,9 @@ void ECI_APP_MAIN(void) {
    if (status == CFE_SUCCESS) {
       CFE_ES_WaitForStartupSync (ECI_STARTUP_SYNC_TIMEOUT);
    } else {
-      CFE_EVS_SendEvent(ECI_INIT_FAIL_ERR_EID, CFE_EVS_ERROR, "ECI Initialization Failed, ECI App Will Exit");
+      CFE_EVS_SendEvent(ECI_INIT_FAIL_ERR_EID, CFE_EVS_EventType_ERROR, "ECI Initialization Failed, ECI App Will Exit");
       /* App will exit for error during initialization */
-      ECI_AppData.RunStatus = CFE_ES_APP_ERROR;
+      ECI_AppData.RunStatus = CFE_ES_RunStatus_APP_ERROR;
    } /* End if-else statement */
 
    /*
@@ -1629,9 +1629,9 @@ void ECI_APP_MAIN(void) {
 
       } else {
 
-         CFE_EVS_SendEvent(ECI_CMD_PIPE_READ_ERR_EID, CFE_EVS_ERROR, "SB Command Pipe Read Error, ECI App will Exit.");
+         CFE_EVS_SendEvent(ECI_CMD_PIPE_READ_ERR_EID, CFE_EVS_EventType_ERROR, "SB Command Pipe Read Error, ECI App will Exit.");
 
-         ECI_AppData.RunStatus = CFE_ES_APP_ERROR;
+         ECI_AppData.RunStatus = CFE_ES_RunStatus_APP_ERROR;
       } /* End if-else statement */
 
    }   /* end while-loop */
