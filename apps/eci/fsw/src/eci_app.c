@@ -129,8 +129,8 @@ typedef struct {
    App_FaultRep_Class  FaultRep;  /*  Fault Reporter Object */
 #endif
 
-   CFE_MSG_Message_t MsgPtr;        /*  Operational data (not reported in housekeeping). */  
-   CFE_MSG_Message_t DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */
+   CFE_MSG_Message_t *MsgPtr;        /*  Operational data (not reported in housekeeping). */  
+   CFE_MSG_Message_t *DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */
    CFE_SB_PipeId_t CmdPipe;       /*  Software Command Pipe Id */  
    CFE_SB_PipeId_t DataPipe;      /*  Software Data Pipe Id */
    uint32 RunStatus;              /*  RunStatus variable used in the main processing loop */
@@ -1064,7 +1064,7 @@ static void housekeeping_cmd(void) {
  * \param[in] MessagePtr = Pointer to command message from cFE table services
  *                         Has parameter with index to table in ECI_ParamTable[]
  *********************************************************************/
-static void table_manage_cmd(CFE_MSG_Message_t MessagePtr)
+static void table_manage_cmd(CFE_MSG_Message_t* MessagePtr)
 {
 
 #ifdef ECI_PARAM_TBL_DEFINED
@@ -1544,7 +1544,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
       /* Table management command */
       case ECI_TBL_MANAGE_MID:
          if (verify_msg_length(messageID, ActualLength, sizeof(CFE_TBL_NotifyCmd_t),EQUAL))
-            table_manage_cmd(msg);
+            table_manage_cmd(&msg);
 
          break;
 
@@ -1559,7 +1559,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
             {
                CFE_MSG_GetMsgId(&ECI_AppData.DataMsgPtr, messageID);
                CFE_MSG_GetSize(&ECI_AppData.DataMsgPtr, ActualLength);
-               rcv_msg(ECI_AppData.DataMsgPtr, messageID, ActualLength, DATAPIPE);
+               rcv_msg(*ECI_AppData.DataMsgPtr, messageID, ActualLength, DATAPIPE);
             } /* End while-loop */
 
             do_step(); 
@@ -1628,7 +1628,7 @@ void ECI_APP_MAIN(void) {
           * the command can alter the global RunStatus variable to 
           * exit the main event loop.
           */
-         app_pipe(ECI_AppData.MsgPtr);
+         app_pipe(*ECI_AppData.MsgPtr);
 
       } else {
 
