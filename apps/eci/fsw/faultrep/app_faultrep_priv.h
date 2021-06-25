@@ -132,8 +132,8 @@ void App_FaultRep_Constructor(App_FaultRep_Class*  FaultRepObjParam, /**< Pointe
 **   4. TlmGen manages the packet's time stamp.
 **
 */
-void App_FaultRep_GenTlmMsg(void*            TlmObjPtr, /**< Pointer to an instance of a App_FaultRep_Class */
-                            CFE_SB_MsgPtr_t  TlmMsgPtr  /**< Pointer to App_FaultRep's telemetry message.   */
+void App_FaultRep_GenTlmMsg(void*               TlmObjPtr, /**< Pointer to an instance of a App_FaultRep_Class */
+                            App_FaultRep_SbMsg* TlmMsgPtr  /**< Pointer to App_FaultRep's telemetry message.   */
                            );
 
 

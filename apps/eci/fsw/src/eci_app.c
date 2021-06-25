@@ -1354,7 +1354,7 @@ static void fdc_pkt_gen(void) {
 
 #ifdef ECI_FLAG_TABLE_DEFINED
 
-   App_FaultRep_GenTlmMsg((void*)&ECI_AppData.FaultRep, (CFE_MSG_Message_t)&ECI_AppData.FDCPacket);
+   App_FaultRep_GenTlmMsg((void*)&ECI_AppData.FaultRep, &ECI_AppData.FDCPacket);
 
    /* Send FDC telemetry packet */
    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket);
