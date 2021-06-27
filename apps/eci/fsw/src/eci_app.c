@@ -632,7 +632,7 @@ static int32 cds_init(void) {
       /* If CDS data already exists, will be restored from CDS */
       if (status == CFE_ES_CDS_ALREADY_EXISTS)
       {
-         CFE_EVS_SendEvent(ECI_CDS_RESTORE_INF_EID, CFE_EVS_INFORMATION, "ECI_CdsTable[%d] already exists in CDS and will be restored", idx);
+         CFE_EVS_SendEvent(ECI_CDS_RESTORE_INF_EID, CFE_EVS_EventType_INFORMATION, "ECI_CdsTable[%d] already exists in CDS and will be restored", idx);
          status = CFE_ES_RestoreFromCDS(ECI_CdsTable[idx].cdsptr, ECI_AppData.CDSHandle[idx]);
 
          /* If there is an error restoring from CDS */
@@ -644,12 +644,12 @@ static int32 cds_init(void) {
       } else if (status == CFE_ES_NOT_IMPLEMENTED) {  /* If CDS is unavailable */
 
          ECI_AppData.CDS_Avail = false;
-         CFE_EVS_SendEvent(ECI_CDS_NOT_AVAIL_INF_EID, CFE_EVS_INFORMATION, "CDS not available for ECI_CdsTable");
+         CFE_EVS_SendEvent(ECI_CDS_NOT_AVAIL_INF_EID, CFE_EVS_EventType_INFORMATION, "CDS not available for ECI_CdsTable");
          break;
 
       } else {
 
-         CFE_EVS_SendEvent(ECI_CDS_REGISTER_INF_EID, CFE_EVS_INFORMATION, "ECI_CdsTable[%d] registered to CDS", idx);
+         CFE_EVS_SendEvent(ECI_CDS_REGISTER_INF_EID, CFE_EVS_EventType_INFORMATION, "ECI_CdsTable[%d] registered to CDS", idx);
 
       } /* End if-else statement */
    } /* End for-statement */
@@ -762,7 +762,7 @@ static int32 app_init(void)
    } /* End if statement */
 
    /* Application startup event message. */
-   CFE_EVS_SendEvent(ECI_INIT_INF_EID, CFE_EVS_INFORMATION, "Application Initialized, Revision %s", ECI_APP_REVISION_NUMBER);
+   CFE_EVS_SendEvent(ECI_INIT_INF_EID, CFE_EVS_EventType_INFORMATION, "Application Initialized, Revision %s", ECI_APP_REVISION_NUMBER);
 
    return (status);
 
@@ -836,7 +836,7 @@ static bool verify_msg_length(CFE_SB_MsgId_t messageID, uint16 actualLength, uin
  ********************************************************************/
 static void no_op_cmd(void) {
 
-   CFE_EVS_SendEvent(ECI_NOOP_INF_EID, CFE_EVS_INFORMATION, "No-op command, Revision %s", ECI_APP_REVISION_NUMBER);
+   CFE_EVS_SendEvent(ECI_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION, "No-op command, Revision %s", ECI_APP_REVISION_NUMBER);
    ECI_AppData.HkPacket.CmdAcceptCounter++;
 
 } /* End of no_op_cmd() */
@@ -866,7 +866,7 @@ static void reset_hk_counter_cmd(void) {
 
    reset_hk_counters();
 
-   CFE_EVS_SendEvent(ECI_RESET_HK_CTR_INF_EID, CFE_EVS_INFORMATION, "Reset Housekeeping Counters");
+   CFE_EVS_SendEvent(ECI_RESET_HK_CTR_INF_EID, CFE_EVS_EventType_INFORMATION, "Reset Housekeeping Counters");
 
 } /* End of reset_hk_counter_cmd() */
 
