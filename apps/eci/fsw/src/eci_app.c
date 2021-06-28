@@ -239,7 +239,7 @@ static int32 register_events(void) {
    } /* End for-loop */
 
    /* Register event filter table. */
-   status = CFE_EVS_Register(ECI_AppData.EventFilters, (SIZEOF_ARRAY(ECI_Events) - 1), CFE_EVS_BINARY_FILTER);
+   status = CFE_EVS_Register(ECI_AppData.EventFilters, (SIZEOF_ARRAY(ECI_Events) - 1), CFE_EVS_EventFilter_BINARY);
 
 #else
 
@@ -680,7 +680,7 @@ static int32 app_init(void)
    status = CFE_ES_GetResetType(&resetType);
 
    /* Setup the RunStatus variable */
-   ECI_AppData.RunStatus = CFE_ES_APP_RUN;
+   ECI_AppData.RunStatus = CFE_ES_RunStatus_APP_RUN;
 
    /* Initialize housekeeping packet (clear user data area).*/
    CFE_SB_InitMsg(&ECI_AppData.HkPacket, ECI_HK_MID, sizeof(ECI_HkPacket_t), true);
@@ -1008,7 +1008,7 @@ static void rcv_msg(const CFE_MSG_Message_t msg, CFE_SB_MsgId_t mid, uint16 Actu
                   ECI_AppData.HkPacket.CmdAcceptCounter++; 
                case BUFFERED:
                default:
-                  CFE_EVS_SendEvent(ECI_MSG_MANAGE_DBG_EID, CFE_EVS_DEBUG, "Mid 0x%04X is %s", MsgRcv[idx].MsgStruct->mid, ((status == QUEUED) ? "QUEUED":"BUFFERED"));
+                  CFE_EVS_SendEvent(ECI_MSG_MANAGE_DBG_EID, CFE_EVS_EventType_DEBUG, "Mid 0x%04X is %s", MsgRcv[idx].MsgStruct->mid, ((status == QUEUED) ? "QUEUED":"BUFFERED"));
                   ECI_AppData.HkPacket.MsgRcvCnt[idx]++;
                   break;
             } /* End switch statement */
@@ -1557,8 +1557,8 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
          {
             while (CFE_SB_RcvMsg(&ECI_AppData.DataMsgPtr, ECI_AppData.DataPipe, CFE_SB_POLL) >= CFE_SUCCESS)
             {
-               CFE_MSG_GetMsgId(&ECI_AppData.DataMsgPtr, messageID);
-               CFE_MSG_GetSize(&ECI_AppData.DataMsgPtr, ActualLength);
+               CFE_MSG_GetMsgId(ECI_AppData.DataMsgPtr, &messageID);
+               CFE_MSG_GetSize(ECI_AppData.DataMsgPtr, &ActualLength);
                rcv_msg(*ECI_AppData.DataMsgPtr, messageID, ActualLength, DATAPIPE);
             } /* End while-loop */
 
@@ -1582,7 +1582,8 @@ void ECI_APP_MAIN(void) {
    int32 status;
 
    /* Register the Application with Executive Services */
-   CFE_ES_RegisterApp();
+   //CFE_ES_RegisterApp();
+   /* Belive this is no longer needed as the app is registered automatically */
 
    /* Create the first Performance Log entry */
    CFE_ES_PerfLogEntry(ECI_PERF_ID);
