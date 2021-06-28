@@ -261,6 +261,7 @@ static int32 sb_init(void)
 {
    unsigned int idx;
    int status;
+   CFE_MSG_Type_t messageType;
 
    /* Subscribe to app-specific ECI_CMD Msg */
    status = CFE_SB_Subscribe(ECI_CMD_MID, ECI_AppData.CmdPipe);
@@ -325,9 +326,12 @@ static int32 sb_init(void)
       MsgRcv[idx].qhd = 1;
       MsgRcv[idx].seq = 0;
       MsgRcv[idx].qexists = false;
-        
+
+      /* Get the message type */
+      CFE_MSG_GetType(MsgRcv[idx].MsgStruct->mptr, &messageType);
+
       /* Identify messages with queue (all received cmd messages have queue) */
-      if (CCSDS_SID_TYPE(MsgRcv[idx].MsgStruct->mid) == CCSDS_CMD)
+      if (messageType == CFE_MSG_Type_Cmd)
       {
          /* Returns error if reserved mid used */
          /* FIXME: update macros*/
@@ -779,34 +783,37 @@ static int32 app_init(void)
  * \retval TRUE  = The message packet passes message length check.
  * \retval FALSE = The message packet failes message length check.
  ********************************************************************/
-static bool verify_msg_length(CFE_SB_MsgId_t messageID, uint16 actualLength, uint16 expectedLength, int cmdMsgTypeCheck) {
+static bool verify_msg_length(CFE_MSG_Message_t message, uint16 actualLength, uint16 expectedLength, int cmdMsgTypeCheck) {
 
    bool tlmFail,cmdFail, result = true;
-   int msgType;
+   CFE_MSG_Type_t msgType;
+   CFE_SB_MsgId_t messageID;
 
    tlmFail = false;
    cmdFail = false;
 
-   msgType = CCSDS_SID_TYPE(messageID);
+   /* Get the message ID and type */
+   CFE_MSG_GetMsgId(&message, &messageID);
+   CFE_MSG_GetType(&message, &msgType);
 
    /*
     * Verify the command packet length using specified evaluation.
     */
    if (cmdMsgTypeCheck == LESS_THAN_EQUAL) {
-      if ( msgType == CCSDS_TLM && actualLength > expectedLength) {
+      if ( msgType == CFE_MSG_Type_Tlm && actualLength > expectedLength) {
          tlmFail = true;
       } /* End if statement */
 
-      if ( msgType == CCSDS_CMD && actualLength > expectedLength) {
+      if ( msgType == CFE_MSG_Type_Cmd && actualLength > expectedLength) {
          cmdFail = true;
       } /* End if statement */
 
    } else { /* DEFAULT is a check for not EQUAL */   
-      if ( msgType == CCSDS_TLM && actualLength != expectedLength) {
+      if ( msgType == CFE_MSG_Type_Tlm && actualLength != expectedLength) {
          tlmFail = true;
       } /* End if statement */
 
-      if ( msgType == CCSDS_CMD && actualLength != expectedLength) {
+      if ( msgType == CFE_MSG_Type_Cmd && actualLength != expectedLength) {
          cmdFail = true;
       } /* End if statement */
    } /* End if-else statement */
@@ -974,12 +981,14 @@ static void rcv_msg(const CFE_MSG_Message_t msg, CFE_SB_MsgId_t mid, uint16 Actu
    int idx;
 
    ECI_MsgControl_t  status;
+   CFE_MSG_Type_t messageType;
 
    /* Flag indicating that msg id received is subscribed */
    bool IDFound = false;
 
    /* Verify cmd messages should be received */
-   bool CmdMsgRcv = (CCSDS_SID_TYPE(mid) == CCSDS_CMD);
+   CFE_MSG_GetType(&msg, &messageType);
+   bool CmdMsgRcv = (messageType == CFE_MSG_Type_Cmd);
 
    /* Loop through to see if message matches mid */
    for (idx = 0; idx < SIZEOF_ARRAY(ECI_MsgRcv) - 1; idx++) {
@@ -990,7 +999,7 @@ static void rcv_msg(const CFE_MSG_Message_t msg, CFE_SB_MsgId_t mid, uint16 Actu
          IDFound = true;
 
          /* Verify Length of Received Message */
-         if (verify_msg_length(mid, ActualLength, MsgRcv[idx].MsgStruct->siz, EQUAL)) {
+         if (verify_msg_length(msg, ActualLength, MsgRcv[idx].MsgStruct->siz, EQUAL)) {
 
             /* Attempts to buffer or queue software bus message */
             status = msg_manage(msg,idx);
@@ -1323,12 +1332,12 @@ static void fdc_signal(void) {
 static void send_msg(void) {
 
    int idx;
-
+   CFE_MSG_Type_t messageType;
    /* Send out Messages */
    for (idx = 0; idx < SIZEOF_ARRAY(ECI_MsgSnd) - 1; idx++) {
-
+      CFE_MSG_GetType(ECI_MsgSnd[idx].mptr, &messageType);
       /* Applies time stamp if telemetry message */
-      if (CCSDS_SID_TYPE(ECI_MsgSnd[idx].mid) == CCSDS_TLM) {
+      if (messageType == CFE_MSG_Type_Tlm) {
          CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr);
       } /* End if statement */
 
@@ -1477,7 +1486,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
             /* No-op Cmd */
             case ECI_NOOP_CC:
-               if (!verify_msg_length(messageID, ActualLength, ECI_NO_DATA_CMD_MSG_LENGTH, EQUAL))
+               if (!verify_msg_length(msg, ActualLength, ECI_NO_DATA_CMD_MSG_LENGTH, EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else
                   no_op_cmd();
@@ -1486,7 +1495,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
             /* HK Reset Cmd */
             case ECI_RESET_HK_COUNTER_CC:
-               if (!verify_msg_length(messageID, ActualLength,ECI_NO_DATA_CMD_MSG_LENGTH,EQUAL))
+               if (!verify_msg_length(msg, ActualLength,ECI_NO_DATA_CMD_MSG_LENGTH,EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else
                   reset_hk_counter_cmd();
@@ -1496,7 +1505,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 #ifdef ECI_FLAG_TABLE_DEFINED
             /* Config Fault Detection Cmd */
             case ECI_FAULTREP_CONFIG_CC:
-               if (!verify_msg_length(messageID, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ConfigFaultDetCmdParam)),EQUAL))
+               if (!verify_msg_length(msg, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ConfigFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else if (App_FaultRep_ConfigFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++;
@@ -1507,7 +1516,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
             /* Clear Fault Detection Data Cmd */
             case ECI_FAULTREP_CLEAR_CC:
-               if (!verify_msg_length(messageID, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ClearFaultDetCmdParam)),EQUAL))
+               if (!verify_msg_length(msg, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ClearFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else if (App_FaultRep_ClearFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++; 
@@ -1534,7 +1543,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
       /* Scheduler requesting HK */
       case ECI_SEND_HK_MID:
-         if (verify_msg_length(messageID, ActualLength, sizeof(CFE_MSG_CommandHeader_t), EQUAL))
+         if (verify_msg_length(msg, ActualLength, sizeof(CFE_MSG_CommandHeader_t), EQUAL))
          {
             housekeeping_cmd();
          } /* End if statement */
@@ -1543,7 +1552,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
       /* Table management command */
       case ECI_TBL_MANAGE_MID:
-         if (verify_msg_length(messageID, ActualLength, sizeof(CFE_TBL_NotifyCmd_t),EQUAL))
+         if (verify_msg_length(msg, ActualLength, sizeof(CFE_TBL_NotifyCmd_t),EQUAL))
             table_manage_cmd(&msg);
 
          break;
@@ -1553,7 +1562,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
        */
       case ECI_TICK_MID:
 
-         if (verify_msg_length(messageID, ActualLength,ECI_NO_DATA_CMD_MSG_LENGTH,EQUAL))
+         if (verify_msg_length(msg, ActualLength,ECI_NO_DATA_CMD_MSG_LENGTH,EQUAL))
          {
             while (CFE_SB_RcvMsg(&ECI_AppData.DataMsgPtr, ECI_AppData.DataPipe, CFE_SB_POLL) >= CFE_SUCCESS)
             {
