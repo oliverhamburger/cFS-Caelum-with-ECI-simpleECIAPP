@@ -1496,7 +1496,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 #ifdef ECI_FLAG_TABLE_DEFINED
             /* Config Fault Detection Cmd */
             case ECI_FAULTREP_CONFIG_CC:
-               if (!verify_msg_length(messageID, ActualLength, (CFE_SB_CMD_HDR_SIZE + sizeof(App_FaultRep_ConfigFaultDetCmdParam)),EQUAL))
+               if (!verify_msg_length(messageID, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ConfigFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else if (App_FaultRep_ConfigFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++;
@@ -1507,7 +1507,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
             /* Clear Fault Detection Data Cmd */
             case ECI_FAULTREP_CLEAR_CC:
-               if (!verify_msg_length(messageID, ActualLength, (CFE_SB_CMD_HDR_SIZE + sizeof(App_FaultRep_ClearFaultDetCmdParam)),EQUAL))
+               if (!verify_msg_length(messageID, ActualLength, (sizeof(CFE_MSG_CommandHeader_t) + sizeof(App_FaultRep_ClearFaultDetCmdParam)),EQUAL))
                   ECI_AppData.HkPacket.CmdErrorCounter++;
                else if (App_FaultRep_ClearFaultDetCmd(&ECI_AppData.FaultRep, CFE_SB_GetUserData(&msg)))
                   ECI_AppData.HkPacket.CmdAcceptCounter++; 
@@ -1534,7 +1534,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
       /* Scheduler requesting HK */
       case ECI_SEND_HK_MID:
-         if (verify_msg_length(messageID, ActualLength, CFE_SB_CMD_HDR_SIZE, EQUAL))
+         if (verify_msg_length(messageID, ActualLength, sizeof(CFE_MSG_CommandHeader_t), EQUAL))
          {
             housekeeping_cmd();
          } /* End if statement */
