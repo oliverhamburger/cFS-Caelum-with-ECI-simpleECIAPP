@@ -418,7 +418,7 @@ static int32 param_table_register(void) {
                                       ECI_ParamTable[idx].tblname,
                                       ECI_ParamTable[idx].tblsize,
                                      (CFE_TBL_OPT_DBL_BUFFER | CFE_TBL_OPT_LOAD_DUMP),
-                                      ECI_ParamTable[idx].tblvalfunc);
+                                     *((CFE_TBL_CallbackFuncPtr_t *)ECI_ParamTable[idx].tblvalfunc));
 
       /* Event message if table registration returns error */
       if (param_status != CFE_SUCCESS) {
