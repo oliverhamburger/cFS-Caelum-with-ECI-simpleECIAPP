@@ -129,8 +129,8 @@ typedef struct {
    App_FaultRep_Class  FaultRep;  /*  Fault Reporter Object */
 #endif
 
-   CFE_MSG_Message_t *MsgPtr;        /*  Operational data (not reported in housekeeping). */  
-   CFE_MSG_Message_t *DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */    //change to buffer ptr and pass that around
+   CFE_SB_Buffer_t  *MsgPtr;        /*  Operational data (not reported in housekeeping). */  
+   CFE_SB_Buffer_t *DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */    
    CFE_SB_PipeId_t CmdPipe;       /*  Software Command Pipe Id */  
    CFE_SB_PipeId_t DataPipe;      /*  Software Data Pipe Id */
    uint32 RunStatus;              /*  RunStatus variable used in the main processing loop */
@@ -1564,11 +1564,11 @@ static void app_pipe(CFE_MSG_Message_t msg) {
 
          if (verify_msg_length(msg, ActualLength,ECI_NO_DATA_CMD_MSG_LENGTH,EQUAL))
          {
-            while (CFE_SB_RcvMsg(&ECI_AppData.DataMsgPtr, ECI_AppData.DataPipe, CFE_SB_POLL) >= CFE_SUCCESS)
+            while (CFE_SB_ReceiveBuffer(&ECI_AppData.DataMsgPtr, ECI_AppData.DataPipe, CFE_SB_POLL) >= CFE_SUCCESS)
             {
-               CFE_MSG_GetMsgId(ECI_AppData.DataMsgPtr, &messageID);
-               CFE_MSG_GetSize(ECI_AppData.DataMsgPtr, &ActualLength);
-               rcv_msg(*ECI_AppData.DataMsgPtr, messageID, ActualLength, DATAPIPE);
+               CFE_MSG_GetMsgId(&ECI_AppData.DataMsgPtr->Msg, &messageID);
+               CFE_MSG_GetSize(&ECI_AppData.DataMsgPtr->Msg, &ActualLength);
+               rcv_msg(ECI_AppData.DataMsgPtr->Msg, messageID, ActualLength, DATAPIPE);
             } /* End while-loop */
 
             do_step(); 
@@ -1624,7 +1624,7 @@ void ECI_APP_MAIN(void) {
       CFE_ES_PerfLogExit(ECI_PERF_ID);
 
       /* Pend on the arrival of the next Software Bus message. */
-      status = CFE_SB_RcvMsg(&ECI_AppData.MsgPtr, ECI_AppData.CmdPipe, CFE_SB_PEND_FOREVER);
+      status = CFE_SB_ReceiveBuffer(&ECI_AppData.MsgPtr, ECI_AppData.CmdPipe, CFE_SB_PEND_FOREVER);
 
       /* Performance Log Entry Stamp. */
       CFE_ES_PerfLogEntry(ECI_PERF_ID);
@@ -1638,7 +1638,7 @@ void ECI_APP_MAIN(void) {
           * the command can alter the global RunStatus variable to 
           * exit the main event loop.
           */
-         app_pipe(*ECI_AppData.MsgPtr);
+         app_pipe(ECI_AppData.MsgPtr->Msg);
 
       } else {
 
