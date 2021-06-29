@@ -130,7 +130,7 @@ typedef struct {
 #endif
 
    CFE_MSG_Message_t *MsgPtr;        /*  Operational data (not reported in housekeeping). */  
-   CFE_MSG_Message_t *DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */
+   CFE_MSG_Message_t *DataMsgPtr;    /*  Data Pipe (not reported in housekeeping). */    //change to buffer ptr and pass that around
    CFE_SB_PipeId_t CmdPipe;       /*  Software Command Pipe Id */  
    CFE_SB_PipeId_t DataPipe;      /*  Software Data Pipe Id */
    uint32 RunStatus;              /*  RunStatus variable used in the main processing loop */
@@ -384,7 +384,7 @@ static int32 sb_init(void)
    /* Init cFE Msg Outputted */
    for (idx = 0; idx < SIZEOF_ARRAY(ECI_MsgSnd) - 1; idx++)
    {
-      CFE_SB_InitMsg(ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid, ECI_MsgSnd[idx].siz, true);
+      CFE_MSG_Init(ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid, ECI_MsgSnd[idx].siz);
    } /* End for-loop */
 
    return CFE_SUCCESS;
@@ -687,11 +687,11 @@ static int32 app_init(void)
    ECI_AppData.RunStatus = CFE_ES_RunStatus_APP_RUN;
 
    /* Initialize housekeeping packet (clear user data area).*/
-   CFE_SB_InitMsg(&ECI_AppData.HkPacket, ECI_HK_MID, sizeof(ECI_HkPacket_t), true);
+   CFE_MSG_Init((CFE_MSG_Message_t *)&ECI_AppData.HkPacket, ECI_HK_MID, sizeof(ECI_HkPacket_t));
 
 #ifdef ECI_FLAG_TABLE_DEFINED 
    /* Initialize FDC packet */
-   CFE_SB_InitMsg(&ECI_AppData.FDCPacket, ECI_FLAG_MID, sizeof(App_FaultRep_SbMsg), true);
+   CFE_MSG_Init((CFE_MSG_Message_t *)&ECI_AppData.FDCPacket, ECI_FLAG_MID, sizeof(App_FaultRep_SbMsg));
 #endif
 
    /* Create Software Bus command message pipe. */
@@ -925,7 +925,7 @@ static void add_to_ring_buffer(int* qtl, int* qcnt, void* data, size_t data_size
  *
  * \return #ECI_MsgControl_t
  *********************************************************************/
-static ECI_MsgControl_t enqueue_cmd_msg(const CFE_MSG_Message_t msg, const unsigned int idx) {
+static ECI_MsgControl_t enqueue_cmd_msg(CFE_MSG_Message_t msg, const unsigned int idx) {
 
    /* Command Queue cannot hold any more messages */
    if (MsgRcv[idx].qcnt >= ECI_CMD_MSG_QUEUE_SIZE){
@@ -1061,7 +1061,7 @@ static void housekeeping_cmd(void) {
 #endif
 
    /* Send housekeeping telemetry packet */
-   bool IncrementSequenceCount;
+   bool IncrementSequenceCount = true;
    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) & ECI_AppData.HkPacket);
    CFE_SB_TransmitMsg((CFE_MSG_Message_t *) & ECI_AppData.HkPacket, IncrementSequenceCount);
 
@@ -1341,15 +1341,15 @@ static void send_msg(void) {
          CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr);
       } /* End if statement */
 
-      CFE_SB_SetMsgId((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid);
+      CFE_MSG_SetMsgId((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].mid);
 
-      CFE_SB_SetTotalMsgLength((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].siz);
+      CFE_MSG_SetSize((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, ECI_MsgSnd[idx].siz);
 
       /* Will place message onto software bus if app-specified enables output or if
          set to always output*/
       if (ECI_MsgSnd[idx].sendMsg == NULL || *(ECI_MsgSnd[idx].sendMsg))
       {
-         CFE_SB_SendMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr);
+         CFE_SB_TransmitMsg((CFE_MSG_Message_t *) ECI_MsgSnd[idx].mptr, true);
       } /* End if statement */
 
    } /* End for-loop */
@@ -1367,7 +1367,7 @@ static void fdc_pkt_gen(void) {
 
    /* Send FDC telemetry packet */
    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket);
-   CFE_SB_SendMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket);
+   CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &ECI_AppData.FDCPacket, true);
 
 #endif /* ECI_FLAG_TABLE_DEFINED */
 
@@ -1461,7 +1461,7 @@ static void do_step(void) {
  *
  * \param[in] msg = Pointer to a software bus message.
  ********************************************************************/
-static void app_pipe(const CFE_MSG_Message_t msg) {
+static void app_pipe(CFE_MSG_Message_t msg) {
 
    CFE_SB_MsgId_t messageID;
    CFE_MSG_FcnCode_t commandCode;
@@ -1469,7 +1469,7 @@ static void app_pipe(const CFE_MSG_Message_t msg) {
 
    /* Obtain the message ID */
    CFE_MSG_GetMsgId(&msg, &messageID);
-   CFE_SB_GetTotalMsgLength(&msg, &ActualLength);
+   CFE_MSG_GetSize(&msg, &ActualLength);
 
    /* Execute based on message Id */
    switch (messageID) {
