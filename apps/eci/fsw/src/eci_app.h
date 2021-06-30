@@ -87,7 +87,7 @@ typedef struct {
   /** Msgpoint to send with an event taken from observable signal */     
   uint8* eventMsg;
   /** Location string */
-  char* loc;
+  const char* loc;
   /** First data point */
   double* data_1;
   /** Second data point */
@@ -110,11 +110,11 @@ typedef struct {
     /** Pointer to table  */
     void**  tblptr;
     /** Name of table  */
-    char*   tblname;
+    const char*   tblname;
     /** Description of table  */
-    char*   tbldesc;
+    const char*   tbldesc;
     /** Filename of table  */
-    char*   tblfilename;
+    const char*   tblfilename;
     /** Size of table */
     uint32  tblsize;
     /** Table validation func */
@@ -125,7 +125,7 @@ typedef struct {
 /** Critical Data Store Structure */
 typedef struct {
    /** Name of CDS block */
-   char*  cdsname;
+   const char*  cdsname;
    /** Size of CDS block */
    size_t cdssiz;
    /** Address of Critical Data  */
