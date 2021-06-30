@@ -85,7 +85,7 @@ typedef struct {
    /** Flag indicating simulink event has occurred */
   bool* eventFlag;
   /** Msgpoint to send with an event taken from observable signal */     
-  uint8* eventMsg;
+  const char* eventMsg;
   /** Location string */
   const char* loc;
   /** First data point */
@@ -117,8 +117,8 @@ typedef struct {
     const char*   tblfilename;
     /** Size of table */
     uint32  tblsize;
-    /** Table validation func */
-    void*   tblvalfunc;   
+    /** Table validation func */   
+    int32_t(*tblvalfunc)(void*);
 } ECI_Tbl_t;
 /**@}*/
 
